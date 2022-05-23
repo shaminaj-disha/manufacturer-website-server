@@ -73,10 +73,10 @@ async function run() {
         });
 
         // get users
-        // app.get('/user', verifyJWT, async (req, res) => {
-        //     const users = await userCollection.find().toArray();
-        //     res.send(users);
-        //   });
+        app.get('/user', verifyJWT, async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+          });
 
         // Put Users to Database
         app.put('/user/:email', async (req, res) => {
