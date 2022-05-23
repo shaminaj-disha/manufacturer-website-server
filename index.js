@@ -36,6 +36,17 @@ async function run() {
         const purchaseCollection = client.db("manufacturer").collection("purchase");
         const userCollection = client.db('manufacturer').collection('users');
 
+        // const verifyAdmin = async (req, res, next) => {
+        //     const requester = req.decoded.email;
+        //     const requesterAccount = await userCollection.findOne({ email: requester });
+        //     if (requesterAccount.role === 'admin') {
+        //         next();
+        //     }
+        //     else {
+        //         res.status(403).send({ message: 'forbidden' });
+        //     }
+        // }
+
         // tools api
         // get tools
         app.get('/tools', async (req, res) => {
@@ -61,7 +72,13 @@ async function run() {
             res.send(blogs);
         });
 
-        // Put User to Database
+        // get users
+        // app.get('/user', verifyJWT, async (req, res) => {
+        //     const users = await userCollection.find().toArray();
+        //     res.send(users);
+        //   });
+
+        // Put Users to Database
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
