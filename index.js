@@ -37,16 +37,16 @@ async function run() {
         const purchaseCollection = client.db("manufacturer").collection("purchase");
         const userCollection = client.db('manufacturer').collection('users');
 
-        // const verifyAdmin = async (req, res, next) => {
-        //     const requester = req.decoded.email;
-        //     const requesterAccount = await userCollection.findOne({ email: requester });
-        //     if (requesterAccount.role === 'admin') {
-        //         next();
-        //     }
-        //     else {
-        //         res.status(403).send({ message: 'forbidden' });
-        //     }
-        // }
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollection.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                next();
+            }
+            else {
+                res.status(403).send({ message: 'forbidden' });
+            }
+        }
 
         // tools api
         // get tools
@@ -58,7 +58,7 @@ async function run() {
         });
 
         // get tools by id
-        app.get('/tools/:id', async (req, res) => {
+        app.get('/tools/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const tool = await toolsCollection.findOne(query);
@@ -96,11 +96,11 @@ async function run() {
         // post purchase
         app.post('/purchase', verifyJWT, async (req, res) => {
             const purchase = req.body;
-            const query = { toolName: purchase.toolName, unitPrice: purchase.unitPrice, quantity: purchase.quantity, totalPrice: purchase.totalPrice, email: purchase.email, name: purchase.name, phone: purchase.phone, address: purchase.address };
-            const exists = await purchaseCollection.findOne(query);
-            if (exists) {
-                return res.send({ success: false, purchase: exists });
-            }
+            // const query = { toolName: purchase.toolName, unitPrice: purchase.unitPrice, quantity: purchase.quantity, totalPrice: purchase.totalPrice, email: purchase.email, name: purchase.name, phone: purchase.phone, address: purchase.address };
+            // const exists = await purchaseCollection.findOne(query);
+            // if (exists) {
+            //     return res.send({ success: false, purchase: exists });
+            // }
             const result = await purchaseCollection.insertOne(purchase);
             return res.send({ success: true, result });
         });
