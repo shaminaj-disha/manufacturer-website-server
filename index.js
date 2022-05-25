@@ -36,6 +36,7 @@ async function run() {
         const blogsCollection = client.db("manufacturer").collection("blogs");
         const purchaseCollection = client.db("manufacturer").collection("purchase");
         const userCollection = client.db('manufacturer').collection('users');
+        const reviewCollection = client.db('manufacturer').collection('review');
 
         const verifyAdmin = async (req, res, next) => {
             const requester = req.decoded.email;
@@ -77,7 +78,7 @@ async function run() {
         app.get('/user', verifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users);
-          });
+        });
 
         // Put Users to Database
         app.put('/user/:email', async (req, res) => {
@@ -93,6 +94,34 @@ async function run() {
             res.send({ result, token });
         });
 
+        // get purchase orders by email
+        app.get('/purchase', verifyJWT, async (req, res) => {
+            const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+            if (email === decodedEmail) {
+                const query = { email: email };
+                const purchases = await purchaseCollection.find(query).toArray();
+                return res.send(purchases);
+            }
+            else {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+        });
+
+        // get reviews
+        app.get('/review', async (req, res) => {
+            const reviews = await reviewCollection.find().toArray();
+            res.send(reviews);
+          })
+
+        // post a review
+        app.post('/review', async (req, res) => {
+            const review = req.body;
+            console.log(req.body);
+            const result = await reviewCollection.insertOne(review);
+            res.send(result);
+        });
+
         // post purchase
         app.post('/purchase', verifyJWT, async (req, res) => {
             const purchase = req.body;
@@ -103,6 +132,14 @@ async function run() {
             // }
             const result = await purchaseCollection.insertOne(purchase);
             return res.send({ success: true, result });
+        });
+
+        // delete purchase order
+        app.delete('/purchase/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await purchaseCollection.deleteOne(query);
+            res.send(result);
         });
 
     } finally {
