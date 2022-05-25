@@ -74,9 +74,15 @@ async function run() {
         });
 
         // get users
-        app.get('/user', verifyJWT, async (req, res) => {
+        app.get('/user', verifyJWT, verifyAdmin, async (req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users);
+        });
+
+        // get all purchase orders
+        app.get('/purchase', verifyJWT, verifyAdmin, async (req, res) => {
+            const orders = await purchaseCollection.find().toArray();
+            return res.send(orders);
         });
 
         // get purchase orders by email
@@ -98,6 +104,22 @@ async function run() {
             const reviews = await reviewCollection.find().toArray();
             res.send(reviews);
         })
+
+            // get admin
+            .get('/admin/:email', async (req, res) => {
+                const email = req.params.email;
+                const user = await userCollection.findOne({ email: email });
+                const isAdmin = user.role === 'admin';
+                res.send({ admin: isAdmin })
+            })
+
+        // post a tool
+        app.post('/tools', async (req, res) => {
+            const tool = req.body;
+            console.log(req.body);
+            const result = await toolsCollection.insertOne(tool);
+            res.send(result);
+        });
 
         // post a review
         app.post('/review', async (req, res) => {
@@ -138,11 +160,11 @@ async function run() {
             const email = req.params.email;
             const filter = { email: email };
             const updateDoc = {
-              $set: { role: 'admin' },
+                $set: { role: 'admin' },
             };
             const result = await userCollection.updateOne(filter, updateDoc);
             res.send(result);
-          })
+        })
 
         // delete purchase order
         app.delete('/purchase/:id', verifyJWT, async (req, res) => {
@@ -155,7 +177,7 @@ async function run() {
         // delete user
         app.delete('/user/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
-            const filter = { email: email};
+            const filter = { email: email };
             const result = await userCollection.deleteOne(filter);
             res.send(result);
         });
