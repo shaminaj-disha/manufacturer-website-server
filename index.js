@@ -80,20 +80,6 @@ async function run() {
             res.send(users);
         });
 
-        // Put Users to Database
-        app.put('/user/:email', async (req, res) => {
-            const email = req.params.email;
-            const user = req.body;
-            const filter = { email: email };
-            const options = { upsert: true };
-            const updateDoc = {
-                $set: user,
-            };
-            const result = await userCollection.updateOne(filter, updateDoc, options);
-            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
-            res.send({ result, token });
-        });
-
         // get purchase orders by email
         app.get('/purchase', verifyJWT, async (req, res) => {
             const email = req.query.email;
@@ -112,7 +98,7 @@ async function run() {
         app.get('/review', async (req, res) => {
             const reviews = await reviewCollection.find().toArray();
             res.send(reviews);
-          })
+        })
 
         // post a review
         app.post('/review', async (req, res) => {
@@ -132,6 +118,20 @@ async function run() {
             // }
             const result = await purchaseCollection.insertOne(purchase);
             return res.send({ success: true, result });
+        });
+
+        // Put Users to Database
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ result, token });
         });
 
         // delete purchase order
