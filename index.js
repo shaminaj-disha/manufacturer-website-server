@@ -86,7 +86,7 @@ async function run() {
         });
 
         // get purchase orders by email
-        app.get('/purchase', verifyJWT, async (req, res) => {
+        app.get('/myOrders', verifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
             if (email === decodedEmail) {
@@ -104,6 +104,13 @@ async function run() {
             const reviews = await reviewCollection.find().toArray();
             res.send(reviews);
         })
+
+            // get single user
+            .get('/profile/:email', verifyJWT, async (req, res) => {
+                const email = req.params.email;
+                const user = await userCollection.findOne({ email: email });
+                res.send(user)
+            })
 
             // get admin
             .get('/admin/:email', async (req, res) => {
@@ -166,6 +173,13 @@ async function run() {
             res.send(result);
         })
 
+        // delete product
+        app.delete('/tools/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await toolsCollection.deleteOne(query);
+            res.send(result);
+        });
         // delete purchase order
         app.delete('/purchase/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
