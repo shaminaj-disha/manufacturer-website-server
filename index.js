@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 const app = express();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // middleware
 app.use(cors());
@@ -36,6 +37,7 @@ async function run() {
         const purchaseCollection = client.db("manufacturer").collection("purchase");
         const userCollection = client.db('manufacturer').collection('users');
         const reviewCollection = client.db('manufacturer').collection('review');
+        const paymentCollection = client.db('manufacturer').collection('payments');
 
         const verifyAdmin = async (req, res, next) => {
             const requester = req.decoded.email;
@@ -78,6 +80,13 @@ async function run() {
             const users = await userCollection.find().toArray();
             res.send(users);
         });
+
+        app.get('/purchase/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const purchase = await purchaseCollection.findOne(query);
+            res.send(purchase);
+        })
 
         // get all purchase orders
         app.get('/purchase', verifyJWT, verifyAdmin, async (req, res) => {
@@ -147,6 +156,53 @@ async function run() {
             const result = await purchaseCollection.insertOne(purchase);
             return res.send({ success: true, result });
         });
+
+        // create payment intent
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const tool = req.body;
+            const price = tool.totalPrice;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
+
+        // update purchase
+        app.patch('/order/:id', verifyJWT, async(req, res) =>{
+            const id  = req.params.id;
+            const payment = req.body;
+            const filter = {_id: ObjectId(id)};
+            const updatedDoc = {
+              $set: {
+                paid: true,
+                status: payment.status,
+                transactionId: payment.transactionId
+              }
+            }
+      
+            const result = await paymentCollection.insertOne(payment);
+            const updatedBooking = await purchaseCollection.updateOne(filter, updatedDoc);
+            res.send(updatedBooking);
+          })
+
+        // update status
+        app.patch('/status/:id', verifyJWT, async(req, res) =>{
+            const id  = req.params.id;
+            const payment = req.body;
+            const filter = {_id: ObjectId(id)};
+            const updatedDoc = {
+              $set: {
+                status: payment.status
+              }
+            }
+      
+            const result = await paymentCollection.insertOne(payment);
+            const updatedBooking = await purchaseCollection.updateOne(filter, updatedDoc);
+            res.send(updatedBooking);
+          })
 
         // Put Users to Database
         app.put('/user/:email', async (req, res) => {

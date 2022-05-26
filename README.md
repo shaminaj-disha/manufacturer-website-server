@@ -20,4 +20,5 @@
 * dotenv
 * MongoDB
 * JWT
+* Stripe Payment
 * Heroku Server
